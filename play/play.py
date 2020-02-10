@@ -421,7 +421,7 @@ class Sprite(object):
         except pygame.error as exc:
             raise Oops(f"""We couldn't find the image file you provided named "{self._image}".
 If the file is in a folder, make sure you add the folder name, too.""") from exc
-        self._primary_pygame_surface.set_colorkey((255,255,255, 255)) # set background to transparent
+        # self._primary_pygame_surface.set_colorkey((255,255,255, 255)) # set background to transparent
 
         self._should_recompute_primary_surface = False
 
