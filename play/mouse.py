@@ -1,4 +1,7 @@
-class _Mouse(object):
+import math
+from .utils import point_touching_sprite, make_async
+
+class Mouse(object):
     def __init__(self):
         self.x = 0
         self.y = 0
@@ -16,11 +19,11 @@ class _Mouse(object):
         return self._is_clicked
 
     def is_touching(self, other):
-        return _point_touching_sprite(self, other)
+        return point_touching_sprite(self, other)
 
     # @decorator
     def when_clicked(self, func):
-        async_callback = _make_async(func)
+        async_callback = make_async(func)
 
         async def wrapper():
             await async_callback()
@@ -30,7 +33,7 @@ class _Mouse(object):
 
     # @decorator
     def when_click_released(self, func):
-        async_callback = _make_async(func)
+        async_callback = make_async(func)
 
         async def wrapper():
             await async_callback()
@@ -52,8 +55,9 @@ class _Mouse(object):
         dx = self.x - x
         dy = self.y - y
 
-        return _math.sqrt(dx**2 + dy**2)
+        return math.sqrt(dx**2 + dy**2)
 
+mouse = Mouse()
 
 # @decorator
 def when_mouse_clicked(func):

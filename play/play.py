@@ -1,6 +1,5 @@
 import os as _os
 import logging as _logging
-import warnings as _warnings
 import inspect as _inspect
 
 import pygame
@@ -10,22 +9,33 @@ import pymunk as _pymunk
 import asyncio as _asyncio
 import random as _random
 import math as _math
-from statistics import mean as _mean
 
 from .keypress import pygame_key_to_name as _pygame_key_to_name # don't pollute user-facing namespace with library internals
 from .color import color_name_to_rgb as _color_name_to_rgb
 from .exceptions import Oops, Hmm
 
+from .random import *
+from .box import Box, new_box
+from .line import Line, new_line
+from .circle import Circle, new_circle
+from .text import Text, new_text
+from .sprite import Sprite, new_image
+from .physics import simulate_physics, set_gravity
+from .position import *
+from .mouse import mouse
+from .keypress import pressed_keys, keypress_callbacks, keyrelease_callbacks
+from .screen import screen
+from .background import backdrop, set_backdrop
+
+from .utils import point_touching_sprite, make_async
+
 pygame.init()
 
-screen = _Screen()
 _pygame_display = pygame.display.set_mode((screen.width, screen.height), pygame.DOUBLEBUF)
 pygame.display.set_caption("Python Play")
-
 all_sprites = []
 
-mouse = _Mouse()
-
+pygame.key.set_repeat(200, 16)
 _keys_pressed_this_frame = []
 _keys_released_this_frame = []
 _keys_to_skip = (pygame.K_MODE,)
@@ -64,9 +74,9 @@ def _game_loop():
                 _pressed_keys[event.key] = name
                 _keys_pressed_this_frame.append(name)
         if event.type == pygame.KEYUP:
-            if not (event.key in _keys_to_skip) and event.key in _pressed_keys:
-                _keys_released_this_frame.append(_pressed_keys[event.key])
-                del _pressed_keys[event.key]
+            if not (event.key in _keys_to_skip) and event.key in pressed_keys:
+                _keys_released_this_frame.append(pressed_keys[event.key])
+                del pressed_keys[event.key]
 
 
 
@@ -74,7 +84,7 @@ def _game_loop():
     # @when_any_key_pressed and @when_key_pressed callbacks
     ############################################################
     for key in _keys_pressed_this_frame:
-        for callback in _keypress_callbacks:
+        for callback in keypress_callbacks:
             if not callback.is_running and (callback.keys is None or key in callback.keys):
                 _loop.create_task(callback(key))
 
@@ -82,7 +92,7 @@ def _game_loop():
     # @when_any_key_released and @when_key_released callbacks
     ############################################################
     for key in _keys_released_this_frame:
-        for callback in _keyrelease_callbacks:
+        for callback in keyrelease_callbacks:
             if not callback.is_running and (callback.keys is None or key in callback.keys):
                 _loop.create_task(callback(key))
 
@@ -111,7 +121,7 @@ def _game_loop():
     #############################
     # physics simulation
     #############################
-    _loop.call_soon(_simulate_physics)
+    _loop.call_soon(simulate_physics)
 
 
     # 1.  get pygame events
@@ -151,7 +161,7 @@ def _game_loop():
 
             body = sprite.physics._pymunk_body
             angle = _math.degrees(body.angle)
-            if isinstance(sprite, line):
+            if isinstance(Sprite, Line):
                 sprite._x = body.position.x - (sprite.length/2) * _math.cos(angle)
                 sprite._y = body.position.y - (sprite.length/2) * _math.sin(angle)
                 sprite._x1 = body.position.x + (sprite.length/2) * _math.cos(angle)
@@ -169,8 +179,8 @@ def _game_loop():
         #################################
         # @sprite.when_clicked events
         #################################
-        if mouse.is_clicked and not type(sprite) == line:
-            if _point_touching_sprite(mouse, sprite):
+        if mouse.is_clicked and not type(sprite) == Line:
+            if point_touching_sprite(mouse, sprite):
                 # only run sprite clicks on the frame the mouse was clicked
                 if click_happened_this_frame:
                     sprite._is_clicked = True
@@ -189,7 +199,7 @@ def _game_loop():
         elif sprite._should_recompute_secondary_surface:
             _loop.call_soon(sprite._compute_secondary_surface)
 
-        if type(sprite) == line:
+        if type(sprite) == Line:
             # @hack: Line-drawing code should probably be in the line._compute_primary_surface function
             # but the coordinates work different for lines than other sprites.
 
@@ -231,18 +241,6 @@ async def animate():
 
     await _asyncio.sleep(0)
 
-# def _get_class_that_defined_method(meth):
-#     if inspect.ismethod(meth):
-#         for cls in inspect.getmro(meth.__self__.__class__):
-#            if cls.__dict__.get(meth.__name__) is meth:
-#                 return cls
-#         meth = meth.__func__  # fallback to __qualname__ parsing
-#     if inspect.isfunction(meth):
-#         cls = getattr(inspect.getmodule(meth),
-#                       meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
-#         if isinstance(cls, type):
-#             return cls
-#     return getattr(meth, '__objclass__', None)  # handle special descriptor objects
 
 _repeat_forever_callbacks = []
 # @decorator
@@ -259,7 +257,7 @@ def repeat_forever(func):
             text.turn(degrees=15)
 
     """
-    async_callback = _make_async(func)
+    async_callback = make_async(func)
     async def repeat_wrapper():
         repeat_wrapper.is_running = True
         await async_callback()
@@ -282,7 +280,7 @@ def when_program_starts(func):
     def do():
         print('the program just started!')
     """
-    async_callback = _make_async(func)
+    async_callback = make_async(func)
     async def wrapper(*args, **kwargs):
         return await async_callback(*args, **kwargs)
     _when_program_starts_callbacks.append(wrapper)

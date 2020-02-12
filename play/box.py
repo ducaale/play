@@ -1,15 +1,12 @@
+import pygame
+from .sprite import Sprite 
+from .play import all_sprites
+from .color import color_name_to_rgb
+
 class Box(Sprite):
-    def __init__(self,
-                 color='black',
-                 x=0,
-                 y=0,
-                 width=100,
-                 height=200,
-                 border_color='light blue',
-                 border_width=0,
-                 transparency=100,
-                 size=100,
-                 angle=0):
+    def __init__(self, color='black', x=0, y=0, width=100, height=200,
+                 border_color='light blue', border_width=0, transparency=100,
+                 size=100, angle=0):
         self._x = x
         self._y = y
         self._width = width
@@ -38,16 +35,16 @@ class Box(Sprite):
         if self._border_width and self._border_color:
             # draw border rectangle
             self._primary_pygame_surface.fill(
-                _color_name_to_rgb(self._border_color))
+                color_name_to_rgb(self._border_color))
             # draw fill rectangle over border rectangle at the proper position
             pygame.draw.rect(self._primary_pygame_surface,
-                             _color_name_to_rgb(self._color),
+                             color_name_to_rgb(self._color),
                              (self._border_width, self._border_width,
                               self._width - 2 * self._border_width,
                               self._height - 2 * self.border_width))
 
         else:
-            self._primary_pygame_surface.fill(_color_name_to_rgb(self._color))
+            self._primary_pygame_surface.fill(color_name_to_rgb(self._color))
 
         self._should_recompute_primary_surface = False
         self._compute_secondary_surface(force=True)

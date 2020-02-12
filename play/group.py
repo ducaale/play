@@ -1,3 +1,6 @@
+from statistics import mean as _mean
+from .sprite import Sprite 
+
 class _MetaGroup(type):
     def __iter__(cls):
         # items added via class variables, e.g.

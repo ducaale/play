@@ -1,3 +1,9 @@
+import pygame
+import warnings
+from .exceptions import Hmm
+from .play import all_sprites
+from .color import color_name_to_rgb
+
 class Text(Sprite):
     def __init__(self, words='hi :)', x=0, y=0, font=None, font_size=50,
                  color='black', angle=0, transparency=100, size=100):
@@ -33,14 +39,14 @@ class Text(Sprite):
         try:
             self._pygame_font = pygame.font.Font(self._font, self._font_size)
         except:
-            _warnings.warn(
+            warnings.warn(
                 f"""We couldn't find the font file '{self._font}'. We'll use the default font instead for now.
 To fix this, either set the font to None, or make sure you have a font file (usually called something like Arial.ttf) in your project folder.\n""",
                 Hmm)
             self._pygame_font = pygame.font.Font(None, self._font_size)
 
         self._primary_pygame_surface = self._pygame_font.render(
-            self._words, True, _color_name_to_rgb(self._color))
+            self._words, True, color_name_to_rgb(self._color))
         self._should_recompute_primary_surface = False
 
         self._compute_secondary_surface(force=True)

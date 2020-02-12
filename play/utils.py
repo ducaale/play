@@ -1,17 +1,21 @@
-def _clamp(num, min_, max_):
-    if num < min_:
-        return min_
-    elif num > max_:
-        return max_
+import warnings as _warnings
+from .exceptions import Oops
+import asyncio as _asyncio
+
+def clamp(num, min, max):
+    if num < min:
+        return min
+    elif num > max:
+        return max
     return num
 
 
-def _point_touching_sprite(point, sprite):
+def point_touching_sprite(point, sprite):
     # todo: custom code for circle, line, rotated rectangley sprites
     return sprite.left <= point.x <= sprite.right and sprite.bottom <= point.y <= sprite.top
 
 
-def _sprite_touching_sprite(a, b):
+def sprite_touching_sprite(a, b):
     # todo: custom code for circle, line, rotated rectangley sprites
     # use physics engine if both sprites have physics on
     # if a.physics and b.physics:
@@ -37,7 +41,7 @@ To fix this, just add the word 'await' before play.{unawaited_function_name} on 
                     print(warning.message)
     return f
 
-def _make_async(func):
+def make_async(func):
     """
     Turn a non-async function into an async function. 
     Used mainly in decorators like @repeat_forever.

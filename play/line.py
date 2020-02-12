@@ -1,4 +1,10 @@
-class line(Sprite):
+import pygame
+import math
+from .sprite import Sprite 
+from .play import all_sprites
+from .color import color_name_to_rgb
+
+class Line(Sprite):
     def __init__(self, color='black', x=0, y=0, length=None, angle=None,
                  thickness=1, x1=None, y1=None, transparency=100, size=100):
         self._x = x
@@ -89,9 +95,9 @@ class line(Sprite):
         self._should_recompute_primary_surface = True
 
     def _calc_endpoint(self):
-        radians = _math.radians(self._angle)
-        return self._length * _math.cos(
-            radians) + self.x, self._length * _math.sin(radians) + self.y
+        radians = math.radians(self._angle)
+        return self._length * math.cos(
+            radians) + self.x, self._length * math.sin(radians) + self.y
 
     @property
     def length(self):
@@ -112,14 +118,14 @@ class line(Sprite):
         self._angle = _angle
         self._x1, self._y1 = self._calc_endpoint()
         if self.physics:
-            self.physics._pymunk_body.angle = _math.radians(_angle)
+            self.physics._pymunk_body.angle = math.radians(_angle)
 
     def _calc_length_angle(self):
         dx = self.x1 - self.x
         dy = self.y1 - self.y
 
         # TODO: this doesn't work at all
-        return _math.sqrt(dx**2 + dy**2), _math.degrees(_math.atan2(dy, dx))
+        return math.sqrt(dx**2 + dy**2), math.degrees(math.atan2(dy, dx))
 
     @property
     def x1(self):

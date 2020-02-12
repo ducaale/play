@@ -1,4 +1,7 @@
-class _Screen(object):
+import pygame
+import play.physics
+
+class Screen(object):
     def __init__(self, width=800, height=600):
         self._width = width
         self._height = height
@@ -11,8 +14,8 @@ class _Screen(object):
     def width(self, _width):
         self._width = _width
 
-        _remove_walls()
-        _create_walls()
+        play.physics.remove_walls()
+        play.physics.create_walls()
 
         pygame.display.set_mode((self._width, self._height))
 
@@ -24,8 +27,8 @@ class _Screen(object):
     def height(self, _height):
         self._height = _height
 
-        _remove_walls()
-        _create_walls()
+        play.physics.remove_walls()
+        play.physics.create_walls()
 
         pygame.display.set_mode((self._width, self._height))
 
@@ -44,3 +47,5 @@ class _Screen(object):
     @property
     def right(self):
         return self.width / 2
+
+screen = Screen()

@@ -1,7 +1,17 @@
+import os
+import math
+import pygame
+import pymunk
+import warnings
+import play.play
+from .exceptions import Oops, Hmm
+from .physics import physics_space
+from .utils import make_async, point_touching_sprite, sprite_touching_sprite, clamp
+
 class Sprite(object):
     def __init__(self, image=None, x=0, y=0, size=100, angle=0, transparency=100):
-        self._image = image or _os.path.join(
-            _os.path.split(__file__)[0], 'blank_image.png')
+        self._image = image or os.path.join(
+            os.path.split(__file__)[0], 'blank_image.png')
         self._x = x
         self._y = y
         self._angle = angle
@@ -16,12 +26,12 @@ class Sprite(object):
 
         self._when_clicked_callbacks = []
 
-        all_sprites.append(self)
+        play.all_sprites.append(self)
 
     def _compute_primary_surface(self):
         try:
             self._primary_pygame_surface = pygame.image.load(
-                _os.path.join(self._image))
+                os.path.join(self._image))
         except pygame.error as exc:
             raise Oops(
                 f"""We couldn't find the image file you provided named "{self._image}".
@@ -77,9 +87,9 @@ If the file is in a folder, make sure you add the folder name, too."""
         return self._is_clicked
 
     def move(self, steps=3):
-        angle = _math.radians(self.angle)
-        self.x += steps * _math.cos(angle)
-        self.y += steps * _math.sin(angle)
+        angle = math.radians(self.angle)
+        self.x += steps * math.cos(angle)
+        self.y += steps * math.sin(angle)
 
     def turn(self, degrees=10):
         self.angle += degrees
@@ -97,8 +107,8 @@ If the file is in a folder, make sure you add the folder name, too."""
             if prev_x != _x:
                 # setting velocity makes the simulation more realistic usually
                 self.physics._pymunk_body.velocity = _x - prev_x, self.physics._pymunk_body.velocity.y
-            if self.physics._pymunk_body.body_type == _pymunk.Body.STATIC:
-                _physics_space.reindex_static()
+            if self.physics._pymunk_body.body_type == pymunk.Body.STATIC:
+                physics_space.reindex_static()
 
     @property
     def y(self):
@@ -113,8 +123,8 @@ If the file is in a folder, make sure you add the folder name, too."""
             if prev_y != _y:
                 # setting velocity makes the simulation more realistic usually
                 self.physics._pymunk_body.velocity = self.physics._pymunk_body.velocity.x, _y - prev_y
-            if self.physics._pymunk_body.body_type == _pymunk.Body.STATIC:
-                _physics_space.reindex_static()
+            if self.physics._pymunk_body.body_type == pymunk.Body.STATIC:
+                physics_space.reindex_static()
 
     @property
     def transparency(self):
@@ -128,12 +138,12 @@ If the file is in a folder, make sure you add the folder name, too."""
 Try looking in your code for where you're setting transparency for {self} and change it a number.
 """)
         if alpha > 100 or alpha < 0:
-            _warnings.warn(
+            warnings.warn(
                 f"""The transparency setting for {self} is being set to {alpha} and it should be between 0 and 100.
 You might want to look in your code where you're setting transparency and make sure it's between 0 and 100.  """,
                 Hmm)
 
-        self._transparency = _clamp(alpha, 0, 100)
+        self._transparency = clamp(alpha, 0, 100)
         self._should_recompute_secondary_surface = True
 
     @property
@@ -155,7 +165,7 @@ You might want to look in your code where you're setting transparency and make s
         self._should_recompute_secondary_surface = True
 
         if self.physics:
-            self.physics._pymunk_body.angle = _math.radians(_angle)
+            self.physics._pymunk_body.angle = math.radians(_angle)
 
     @property
     def size(self):
@@ -198,16 +208,16 @@ You might want to look in your code where you're setting transparency and make s
     def is_touching(self, sprite_or_point):
         rect = self._secondary_pygame_surface.get_rect()
         if isinstance(sprite_or_point, Sprite):
-            return _sprite_touching_sprite(sprite_or_point, self)
+            return sprite_touching_sprite(sprite_or_point, self)
         else:
-            return _point_touching_sprite(sprite_or_point, self)
+            return point_touching_sprite(sprite_or_point, self)
 
     def point_towards(self, x, y=None):
         try:
             x, y = x.x, x.y
         except AttributeError:
             x, y = x, y
-        self.angle = _math.degrees(_math.atan2(y - self.y, x - self.x))
+        self.angle = math.degrees(math.atan2(y - self.y, x - self.x))
 
     def go_to(self, x=None, y=None):
         """
@@ -244,7 +254,7 @@ You might want to look in your code where you're setting transparency and make s
         dx = self.x - x1
         dy = self.y - y1
 
-        return _math.sqrt(dx**2 + dy**2)
+        return math.sqrt(dx**2 + dy**2)
 
     def remove(self):
         if self.physics:
@@ -301,7 +311,7 @@ You might want to look in your code where you're setting transparency and make s
 
     # @decorator
     def when_clicked(self, callback, call_with_sprite=False):
-        async_callback = _make_async(callback)
+        async_callback = make_async(callback)
 
         async def wrapper():
             wrapper.is_running = True

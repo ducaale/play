@@ -1,5 +1,7 @@
+from .color import color_name_to_rgb
 
 backdrop = (255, 255, 255)
+
 def set_backdrop(color_or_image_name):
     global backdrop
     # I chose to make set_backdrop a function so that we can give
@@ -12,5 +14,5 @@ def set_backdrop(color_or_image_name):
     # deep in this library instead of in the user code.
 
     # this line will raise a useful exception
-    _color_name_to_rgb(color_or_image_name)
+    color_name_to_rgb(color_or_image_name)
     backdrop = color_or_image_name
