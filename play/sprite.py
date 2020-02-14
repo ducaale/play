@@ -1,8 +1,10 @@
 import os
 import math
+
 import pygame
 import pymunk
 import warnings
+
 from .exceptions import Oops, Hmm
 import play.physics
 from .utils import make_async, point_touching_sprite, sprite_touching_sprite, clamp
@@ -258,7 +260,7 @@ You might want to look in your code where you're setting transparency and make s
     def remove(self):
         if self.physics:
             self.physics._remove()
-        all_sprites.remove(self)
+        play.cfg.all_sprites.remove(self)
 
     @property
     def width(self):
@@ -354,7 +356,7 @@ You might want to look in your code where you're setting transparency and make s
     def start_physics(self, can_move=True, stable=False, x_speed=0, y_speed=0,
                       obeys_gravity=True, bounciness=1.0, mass=10, friction=0.1):
         if not self.physics:
-            self.physics = _Physics(
+            self.physics = play.physics.Physics(
                 self,
                 can_move,
                 stable,
@@ -370,6 +372,13 @@ You might want to look in your code where you're setting transparency and make s
         self.physics._remove()
         self.physics = None
 
+# @decorator
+def when_sprite_clicked(*sprites):
+    def wrapper(func):
+        for sprite in sprites:
+            sprite.when_clicked(func, call_with_sprite=True)
+        return func
+    return wrapper
 
 def new_image(image=None, x=0, y=0, size=100, angle=0, transparency=100):
     return Sprite(image=image, x=x, y=y, size=size, angle=angle, transparency=transparency) 

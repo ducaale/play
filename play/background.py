@@ -1,9 +1,7 @@
 from .color import color_name_to_rgb
-
-backdrop = (255, 255, 255)
+from . import cfg
 
 def set_backdrop(color_or_image_name):
-    global backdrop
     # I chose to make set_backdrop a function so that we can give
     # good error messages at the call site if a color isn't recognized.
     # If we didn't have a function and just set backdrop like this:
@@ -15,4 +13,4 @@ def set_backdrop(color_or_image_name):
 
     # this line will raise a useful exception
     color_name_to_rgb(color_or_image_name)
-    backdrop = color_or_image_name
+    cfg.backdrop = color_or_image_name

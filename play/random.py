@@ -1,10 +1,14 @@
+import random
+import play.position
+from . import cfg
+
 def random_number(lowest=0, highest=100):
     # if user supplies whole numbers, return whole numbers
     if type(lowest) == int and type(highest) == int:
-        return _random.randint(lowest, highest)
+        return random.randint(lowest, highest)
     else:
         # if user supplied any floats, return decimals
-        return round(_random.uniform(lowest, highest), 2)
+        return round(random.uniform(lowest, highest), 2)
 
 
 def random_color():
@@ -21,6 +25,6 @@ def random_position():
     or equivalently:
         sprite.go_to(play.random_position())
     """
-    return _Position(
-        random_number(screen.left, screen.right),
-        random_number(screen.bottom, screen.top))
+    return play.position.Position(
+        random_number(cfg.screen.left, cfg.screen.right),
+        random_number(cfg.screen.bottom, cfg.screen.top))

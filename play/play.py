@@ -4,27 +4,17 @@ import asyncio as _asyncio
 import logging as _logging
 import pygame
 
-from .keypress import pygame_key_to_name as _pygame_key_to_name # don't pollute user-facing namespace with library internals
-from .color import color_name_to_rgb as _color_name_to_rgb
 from . import cfg
-from .screen import Screen
-from .random import *
-from .physics import simulate_physics, set_gravity, create_walls
-from .sprite import Sprite, new_image
-from .box import Box, new_box
-from .line import Line, new_line
-from .circle import Circle, new_circle
-from .text import Text, new_text
-from .position import *
+from .keyboard import pygame_key_to_name, pressed_keys, keypress_callbacks, keyrelease_callbacks
+from .color import color_name_to_rgb
+from .physics import simulate_physics
+from .sprite import Sprite
+from .line import Line
 from .mouse import mouse
-from .keypress import pressed_keys, keypress_callbacks, keyrelease_callbacks, key_is_pressed
-from .background import backdrop, set_backdrop
 from .utils import point_touching_sprite, make_async
 
 pygame.init()
-
-screen = Screen()
-
+screen = cfg.screen
 _pygame_display = pygame.display.set_mode((screen.width, screen.height), pygame.DOUBLEBUF)
 pygame.display.set_caption("Python Play")
 
@@ -63,7 +53,7 @@ def _game_loop():
             mouse.x, mouse.y = (event.pos[0] - screen.width/2.), (screen.height/2. - event.pos[1])
         if event.type == pygame.KEYDOWN:
             if not (event.key in _keys_to_skip):
-                name = _pygame_key_to_name(event)
+                name = pygame_key_to_name(event)
                 pressed_keys[event.key] = name
                 _keys_pressed_this_frame.append(name)
         if event.type == pygame.KEYUP:
@@ -132,7 +122,7 @@ def _game_loop():
 
 
 
-    _pygame_display.fill(_color_name_to_rgb(backdrop))
+    _pygame_display.fill(color_name_to_rgb(cfg.backdrop))
 
     # BACKGROUND COLOR
     # note: cannot use screen.fill((1, 1, 1)) because pygame's screen
@@ -206,9 +196,9 @@ def _game_loop():
             x1 = screen.width/2 + sprite.x1
             y1 = screen.height/2 - sprite.y1
             if sprite.thickness == 1:
-                 pygame.draw.aaline(_pygame_display, _color_name_to_rgb(sprite.color), (x,y), (x1,y1), True)
+                 pygame.draw.aaline(_pygame_display, color_name_to_rgb(sprite.color), (x,y), (x1,y1), True)
             else:
-                 pygame.draw.line(_pygame_display, _color_name_to_rgb(sprite.color), (x,y), (x1,y1), sprite.thickness)
+                 pygame.draw.line(_pygame_display, color_name_to_rgb(sprite.color), (x,y), (x1,y1), sprite.thickness)
         else:
             _pygame_display.blit(sprite._secondary_pygame_surface, (sprite._pygame_x(screen), sprite._pygame_y(screen)))
 

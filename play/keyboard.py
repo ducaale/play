@@ -129,14 +129,6 @@ keypress_callbacks = []
 keyrelease_callbacks = []
 
 # @decorator
-def when_sprite_clicked(*sprites):
-    def wrapper(func):
-        for sprite in sprites:
-            sprite.when_clicked(func, call_with_sprite=True)
-        return func
-    return wrapper
-
-# @decorator
 def when_any_key_pressed(func):
     if not callable(func):
         raise Oops("""@play.when_any_key_pressed doesn't use a list of keys. Try just this instead:

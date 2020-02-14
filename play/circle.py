@@ -1,6 +1,6 @@
 import pygame
-from .sprite import Sprite
 import play.cfg
+from .sprite import Sprite
 from .color import color_name_to_rgb
 
 class Circle(Sprite):

@@ -1,12 +1,12 @@
-import warnings as _warnings
+import asyncio
+import warnings
 from .exceptions import Oops
-import asyncio as _asyncio
 
-def clamp(num, min, max):
-    if num < min:
-        return min
-    elif num > max:
-        return max
+def clamp(num, min_, max_):
+    if num < min_:
+        return min_
+    elif num > max_:
+        return max_
     return num
 
 
@@ -23,13 +23,19 @@ def sprite_touching_sprite(a, b):
         return False
     return True
 
-def _raise_on_await_warning(func):
+def is_line(sprite):
+    return hasattr(sprite, '_x1') and hasattr(sprite, '_y1')
+
+def is_circle(sprite):
+    return hasattr(sprite, '_radius')
+
+def raise_on_await_warning(func):
     """
     If someone doesn't put 'await' before functions that require 'await'
     like play.timer() or play.animate(), raise an exception.
     """
     async def f(*args, **kwargs):
-        with _warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as w:
             await func(*args, **kwargs)
             for warning in w:
                 str_message = warning.message.args[0] # e.g. "coroutine 'timer' was never awaited"
@@ -46,10 +52,10 @@ def make_async(func):
     Turn a non-async function into an async function. 
     Used mainly in decorators like @repeat_forever.
     """
-    if _asyncio.iscoroutinefunction(func):
+    if asyncio.iscoroutinefunction(func):
         # if it's already async just return it
-        return _raise_on_await_warning(func)
-    @_raise_on_await_warning
+        return raise_on_await_warning(func)
+    @raise_on_await_warning
     async def async_func(*args, **kwargs):
         return func(*args, **kwargs)
     return async_func

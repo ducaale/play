@@ -1,5 +1,7 @@
-import pygame
 import math
+
+import pygame
+
 from .sprite import Sprite 
 from . import cfg
 from .color import color_name_to_rgb

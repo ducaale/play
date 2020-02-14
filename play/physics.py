@@ -1,8 +1,8 @@
 import math
+
 import pymunk
-import play.circle
-import play.line
-from .utils import clamp
+
+from .utils import clamp, is_circle, is_line
 
 _SPEED_MULTIPLIER = 10
 
@@ -51,7 +51,7 @@ def remove_walls():
     physics_space.remove(_walls)
     _walls.clear()
 
-class _Physics(object):
+class Physics(object):
     def __init__(self, sprite, can_move, stable, x_speed, y_speed,
                  obeys_gravity, bounciness, mass, friction):
         """
@@ -90,7 +90,7 @@ class _Physics(object):
         mass = self.mass if self.can_move else 0
 
         # non-moving line shapes are platforms and it's easier to take care of them less-generically
-        if not self.can_move and isinstance(self.sprite, play.line.Line):
+        if not self.can_move and is_line(self.sprite):
             self._pymunk_body = physics_space.static_body.copy()
             self._pymunk_shape = pymunk.Segment(
                 self._pymunk_body, (self.sprite.x, self.sprite.y),
@@ -98,10 +98,10 @@ class _Physics(object):
         else:
             if self.stable:
                 moment = pymunk.inf
-            elif isinstance(self.sprite, play.circle.Circle):
+            elif is_circle(self.sprite):
                 moment = pymunk.moment_for_circle(mass, 0, self.sprite.radius,
                                                    (0, 0))
-            elif isinstance(self.sprite, play.line.Line):
+            elif is_line(self.sprite):
                 moment = pymunk.moment_for_box(
                     mass, (self.sprite.length, self.sprite.thickness))
             else:
@@ -119,7 +119,7 @@ class _Physics(object):
                 body_type = pymunk.Body.STATIC
             self._pymunk_body = pymunk.Body(mass, moment, body_type=body_type)
 
-            if isinstance(self.sprite, play.line.Line):
+            if is_line(self.sprite):
                 self._pymunk_body.position = self.sprite.x + (
                     self.sprite.x1 - self.sprite.x) / 2, self.sprite.y + (
                         self.sprite.y1 - self.sprite.y) / 2
@@ -134,10 +134,10 @@ class _Physics(object):
             if not self.obeys_gravity:
                 self._pymunk_body.velocity_func = lambda body, gravity, damping, dt: None
 
-            if isinstance(self.sprite, play.circle.Circle):
+            if is_circle(self.sprite):
                 self._pymunk_shape = pymunk.Circle(self._pymunk_body,
                                                     self.sprite.radius, (0, 0))
-            elif isinstance(self.sprite, play.line.Line):
+            elif is_line(self.sprite):
                 self._pymunk_shape = pymunk.Segment(
                     self._pymunk_body, (self.sprite.x, self.sprite.y),
                     (self.sprite.x1, self.sprite.y1), self.sprite.thickness)
