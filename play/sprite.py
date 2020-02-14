@@ -3,9 +3,8 @@ import math
 import pygame
 import pymunk
 import warnings
-import play.play
 from .exceptions import Oops, Hmm
-from .physics import physics_space
+import play.physics
 from .utils import make_async, point_touching_sprite, sprite_touching_sprite, clamp
 
 class Sprite(object):
@@ -26,7 +25,7 @@ class Sprite(object):
 
         self._when_clicked_callbacks = []
 
-        play.all_sprites.append(self)
+        play.cfg.all_sprites.append(self)
 
     def _compute_primary_surface(self):
         try:
@@ -108,7 +107,7 @@ If the file is in a folder, make sure you add the folder name, too."""
                 # setting velocity makes the simulation more realistic usually
                 self.physics._pymunk_body.velocity = _x - prev_x, self.physics._pymunk_body.velocity.y
             if self.physics._pymunk_body.body_type == pymunk.Body.STATIC:
-                physics_space.reindex_static()
+                play.physics.physics_space.reindex_static()
 
     @property
     def y(self):
@@ -124,7 +123,7 @@ If the file is in a folder, make sure you add the folder name, too."""
                 # setting velocity makes the simulation more realistic usually
                 self.physics._pymunk_body.velocity = self.physics._pymunk_body.velocity.x, _y - prev_y
             if self.physics._pymunk_body.body_type == pymunk.Body.STATIC:
-                physics_space.reindex_static()
+                play.physics.physics_space.reindex_static()
 
     @property
     def transparency(self):
@@ -301,11 +300,11 @@ You might want to look in your code where you're setting transparency and make s
     def bottom(self, y):
         self.y = y + self.height / 2
 
-    def _pygame_x(self):
+    def _pygame_x(self, screen):
         return self.x + (screen.width / 2.) - (
             self._secondary_pygame_surface.get_width() / 2.)
 
-    def _pygame_y(self):
+    def _pygame_y(self, screen):
         return (screen.height / 2.) - self.y - (
             self._secondary_pygame_surface.get_height() / 2.)
 

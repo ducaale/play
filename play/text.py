@@ -1,7 +1,8 @@
 import pygame
 import warnings
 from .exceptions import Hmm
-from .play import all_sprites
+from .cfg import all_sprites
+from .sprite import Sprite 
 from .color import color_name_to_rgb
 
 class Text(Sprite):

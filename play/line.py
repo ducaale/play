@@ -1,7 +1,7 @@
 import pygame
 import math
 from .sprite import Sprite 
-from .play import all_sprites
+from . import cfg
 from .color import color_name_to_rgb
 
 class Line(Sprite):
@@ -37,7 +37,7 @@ class Line(Sprite):
 
         self._compute_primary_surface()
 
-        all_sprites.append(self)
+        cfg.all_sprites.append(self)
 
     def clone(self):
         return self.__class__(

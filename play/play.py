@@ -1,39 +1,32 @@
-import os as _os
-import logging as _logging
-import inspect as _inspect
-
-import pygame
-import pygame.gfxdraw
-import pymunk as _pymunk
+import math
 
 import asyncio as _asyncio
-import random as _random
-import math as _math
+import logging as _logging
+import pygame
 
 from .keypress import pygame_key_to_name as _pygame_key_to_name # don't pollute user-facing namespace with library internals
 from .color import color_name_to_rgb as _color_name_to_rgb
-from .exceptions import Oops, Hmm
-
+from . import cfg
+from .screen import Screen
 from .random import *
+from .physics import simulate_physics, set_gravity, create_walls
+from .sprite import Sprite, new_image
 from .box import Box, new_box
 from .line import Line, new_line
 from .circle import Circle, new_circle
 from .text import Text, new_text
-from .sprite import Sprite, new_image
-from .physics import simulate_physics, set_gravity
 from .position import *
 from .mouse import mouse
-from .keypress import pressed_keys, keypress_callbacks, keyrelease_callbacks
-from .screen import screen
+from .keypress import pressed_keys, keypress_callbacks, keyrelease_callbacks, key_is_pressed
 from .background import backdrop, set_backdrop
-
 from .utils import point_touching_sprite, make_async
 
 pygame.init()
 
+screen = Screen()
+
 _pygame_display = pygame.display.set_mode((screen.width, screen.height), pygame.DOUBLEBUF)
 pygame.display.set_caption("Python Play")
-all_sprites = []
 
 pygame.key.set_repeat(200, 16)
 _keys_pressed_this_frame = []
@@ -71,7 +64,7 @@ def _game_loop():
         if event.type == pygame.KEYDOWN:
             if not (event.key in _keys_to_skip):
                 name = _pygame_key_to_name(event)
-                _pressed_keys[event.key] = name
+                pressed_keys[event.key] = name
                 _keys_pressed_this_frame.append(name)
         if event.type == pygame.KEYUP:
             if not (event.key in _keys_to_skip) and event.key in pressed_keys:
@@ -147,7 +140,7 @@ def _game_loop():
     # gl.glClearColor(_background_color[0], _background_color[1], _background_color[2], 1)
     # gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-    for sprite in all_sprites:
+    for sprite in cfg.all_sprites:
 
         sprite._is_clicked = False
 
@@ -160,12 +153,12 @@ def _game_loop():
         if sprite.physics and sprite.physics.can_move:
 
             body = sprite.physics._pymunk_body
-            angle = _math.degrees(body.angle)
+            angle = math.degrees(body.angle)
             if isinstance(Sprite, Line):
-                sprite._x = body.position.x - (sprite.length/2) * _math.cos(angle)
-                sprite._y = body.position.y - (sprite.length/2) * _math.sin(angle)
-                sprite._x1 = body.position.x + (sprite.length/2) * _math.cos(angle)
-                sprite._y1 = body.position.y + (sprite.length/2) * _math.sin(angle)
+                sprite._x = body.position.x - (sprite.length/2) * math.cos(angle)
+                sprite._y = body.position.y - (sprite.length/2) * math.sin(angle)
+                sprite._x1 = body.position.x + (sprite.length/2) * math.cos(angle)
+                sprite._y1 = body.position.y + (sprite.length/2) * math.sin(angle)
                 # sprite._length, sprite._angle = sprite._calc_length_angle()
             else:
                 if str(body.position.x) != 'nan': # this condition can happen when changing sprite.physics.can_move
@@ -217,7 +210,7 @@ def _game_loop():
             else:
                  pygame.draw.line(_pygame_display, _color_name_to_rgb(sprite.color), (x,y), (x1,y1), sprite.thickness)
         else:
-            _pygame_display.blit(sprite._secondary_pygame_surface, (sprite._pygame_x(), sprite._pygame_y()) )
+            _pygame_display.blit(sprite._secondary_pygame_surface, (sprite._pygame_x(screen), sprite._pygame_y(screen)))
 
     pygame.display.flip()
     _loop.call_soon(_game_loop)

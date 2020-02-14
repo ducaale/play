@@ -6,6 +6,8 @@ class Screen(object):
         self._width = width
         self._height = height
 
+        play.physics.create_walls(self)
+
     @property
     def width(self):
         return self._width
@@ -47,5 +49,3 @@ class Screen(object):
     @property
     def right(self):
         return self.width / 2
-
-screen = Screen()

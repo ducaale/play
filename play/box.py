@@ -1,6 +1,6 @@
 import pygame
 from .sprite import Sprite 
-from .play import all_sprites
+from .cfg import all_sprites
 from .color import color_name_to_rgb
 
 class Box(Sprite):

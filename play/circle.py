@@ -1,9 +1,9 @@
 import pygame
-import play.play
-import play.sprite
+from .sprite import Sprite
+import play.cfg
 from .color import color_name_to_rgb
 
-class Circle(sprite.Sprite):
+class Circle(Sprite):
     def __init__(self, color='black', x=0, y=0, radius=100,
                  border_color='light blue', border_width=0, transparency=100,
                  size=100, angle=0):
@@ -25,7 +25,7 @@ class Circle(sprite.Sprite):
 
         self._compute_primary_surface()
 
-        play.all_sprites.append(self)
+        play.cfg.all_sprites.append(self)
 
     def clone(self):
         return self.__class__(
