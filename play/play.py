@@ -1,47 +1,45 @@
 import math
 
-import asyncio as _asyncio
-import logging as _logging
+import asyncio
+import logging
 import pygame
 
 from . import cfg
 from .keyboard import pygame_key_to_name, pressed_keys, keypress_callbacks, keyrelease_callbacks
 from .color import color_name_to_rgb
 from .physics import simulate_physics
-from .sprite import Sprite
-from .line import Line
 from .mouse import mouse
-from .utils import point_touching_sprite, make_async
+from .utils import point_touching_sprite, make_async, is_line
 
 pygame.init()
 screen = cfg.screen
-_pygame_display = pygame.display.set_mode((screen.width, screen.height), pygame.DOUBLEBUF)
+pygame_display = pygame.display.set_mode((screen.width, screen.height), pygame.DOUBLEBUF)
 pygame.display.set_caption("Python Play")
 
 pygame.key.set_repeat(200, 16)
-_keys_pressed_this_frame = []
-_keys_released_this_frame = []
-_keys_to_skip = (pygame.K_MODE,)
+keys_pressed_this_frame = []
+keys_released_this_frame = []
+keys_to_skip = (pygame.K_MODE,)
 pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION])
 
-_loop = _asyncio.get_event_loop()
-_loop.set_debug(False)
+loop = asyncio.get_eventloop()
+loop.set_debug(False)
 
-_clock = pygame.time.Clock()
-def _game_loop():
-    _keys_pressed_this_frame.clear() # do this instead of `_keys_pressed_this_frame = []` to save a tiny bit of memory
-    _keys_released_this_frame.clear()
+clock = pygame.time.Clock()
+def gameloop():
+    keys_pressed_this_frame.clear() # do this instead of `keys_pressed_this_frame = []` to save a tiny bit of memory
+    keys_released_this_frame.clear()
     click_happened_this_frame = False
     click_release_happened_this_frame = False
 
-    _clock.tick(60)
+    clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (
             event.type == pygame.KEYDOWN and event.key == pygame.K_q and (
                 pygame.key.get_mods() & pygame.KMOD_META or pygame.key.get_mods() & pygame.KMOD_CTRL
         )):
             # quitting by clicking window's close button or pressing ctrl+q / command+q
-            _loop.stop()
+            loop.stop()
             return False
         if event.type == pygame.MOUSEBUTTONDOWN:
             click_happened_this_frame = True
@@ -52,13 +50,13 @@ def _game_loop():
         if event.type == pygame.MOUSEMOTION:
             mouse.x, mouse.y = (event.pos[0] - screen.width/2.), (screen.height/2. - event.pos[1])
         if event.type == pygame.KEYDOWN:
-            if not (event.key in _keys_to_skip):
+            if not (event.key in keys_to_skip):
                 name = pygame_key_to_name(event)
                 pressed_keys[event.key] = name
-                _keys_pressed_this_frame.append(name)
+                keys_pressed_this_frame.append(name)
         if event.type == pygame.KEYUP:
-            if not (event.key in _keys_to_skip) and event.key in pressed_keys:
-                _keys_released_this_frame.append(pressed_keys[event.key])
+            if not (event.key in keys_to_skip) and event.key in pressed_keys:
+                keys_released_this_frame.append(pressed_keys[event.key])
                 del pressed_keys[event.key]
 
 
@@ -66,18 +64,18 @@ def _game_loop():
     ############################################################
     # @when_any_key_pressed and @when_key_pressed callbacks
     ############################################################
-    for key in _keys_pressed_this_frame:
+    for key in keys_pressed_this_frame:
         for callback in keypress_callbacks:
             if not callback.is_running and (callback.keys is None or key in callback.keys):
-                _loop.create_task(callback(key))
+                loop.create_task(callback(key))
 
     ############################################################
     # @when_any_key_released and @when_key_released callbacks
     ############################################################
-    for key in _keys_released_this_frame:
+    for key in keys_released_this_frame:
         for callback in keyrelease_callbacks:
             if not callback.is_running and (callback.keys is None or key in callback.keys):
-                _loop.create_task(callback(key))
+                loop.create_task(callback(key))
 
 
     ####################################
@@ -85,26 +83,26 @@ def _game_loop():
     ####################################
     if click_happened_this_frame and mouse._when_clicked_callbacks:
         for callback in mouse._when_clicked_callbacks:
-            _loop.create_task(callback())
+            loop.create_task(callback())
 
     ########################################
     # @mouse.when_click_released callbacks
     ########################################
     if click_release_happened_this_frame and mouse._when_click_released_callbacks:
         for callback in mouse._when_click_released_callbacks:
-            _loop.create_task(callback())
+            loop.create_task(callback())
 
     #############################
     # @repeat_forever callbacks
     #############################
-    for callback in _repeat_forever_callbacks:
+    for callback in repeat_forever_callbacks:
         if not callback.is_running:
-            _loop.create_task(callback())
+            loop.create_task(callback())
 
     #############################
     # physics simulation
     #############################
-    _loop.call_soon(simulate_physics)
+    loop.call_soon(simulate_physics)
 
 
     # 1.  get pygame events
@@ -122,7 +120,7 @@ def _game_loop():
 
 
 
-    _pygame_display.fill(color_name_to_rgb(cfg.backdrop))
+    pygame_display.fill(color_name_to_rgb(cfg.backdrop))
 
     # BACKGROUND COLOR
     # note: cannot use screen.fill((1, 1, 1)) because pygame's screen
@@ -144,7 +142,7 @@ def _game_loop():
 
             body = sprite.physics._pymunk_body
             angle = math.degrees(body.angle)
-            if isinstance(Sprite, Line):
+            if is_line(sprite):
                 sprite._x = body.position.x - (sprite.length/2) * math.cos(angle)
                 sprite._y = body.position.y - (sprite.length/2) * math.sin(angle)
                 sprite._x1 = body.position.x + (sprite.length/2) * math.cos(angle)
@@ -162,14 +160,14 @@ def _game_loop():
         #################################
         # @sprite.when_clicked events
         #################################
-        if mouse.is_clicked and not type(sprite) == Line:
+        if mouse.is_clicked and not is_line(sprite):
             if point_touching_sprite(mouse, sprite):
                 # only run sprite clicks on the frame the mouse was clicked
                 if click_happened_this_frame:
                     sprite._is_clicked = True
                     for callback in sprite._when_clicked_callbacks:
                         if not callback.is_running:
-                            _loop.create_task(callback())
+                            loop.create_task(callback())
 
 
         # do sprite image transforms (re-rendering images/fonts, scaling, rotating, etc)
@@ -178,32 +176,32 @@ def _game_loop():
         # synchronously then the data and rendered image may get out of sync
         if sprite._should_recompute_primary_surface:
             # recomputing primary surface also recomputes secondary surface
-            _loop.call_soon(sprite._compute_primary_surface)
+            loop.call_soon(sprite._compute_primary_surface)
         elif sprite._should_recompute_secondary_surface:
-            _loop.call_soon(sprite._compute_secondary_surface)
+            loop.call_soon(sprite._compute_secondary_surface)
 
-        if type(sprite) == Line:
+        if is_line(sprite):
             # @hack: Line-drawing code should probably be in the line._compute_primary_surface function
             # but the coordinates work different for lines than other sprites.
 
 
             # x = screen.width/2 + sprite.x
             # y = screen.height/2 - sprite.y - sprite.thickness
-            # _pygame_display.blit(sprite._secondary_pygame_surface, (x,y) )
+            # pygame_display.blit(sprite._secondary_pygame_surface, (x,y) )
 
             x = screen.width/2 + sprite.x
             y = screen.height/2 - sprite.y
             x1 = screen.width/2 + sprite.x1
             y1 = screen.height/2 - sprite.y1
             if sprite.thickness == 1:
-                 pygame.draw.aaline(_pygame_display, color_name_to_rgb(sprite.color), (x,y), (x1,y1), True)
+                 pygame.draw.aaline(pygame_display, color_name_to_rgb(sprite.color), (x,y), (x1,y1), True)
             else:
-                 pygame.draw.line(_pygame_display, color_name_to_rgb(sprite.color), (x,y), (x1,y1), sprite.thickness)
+                 pygame.draw.line(pygame_display, color_name_to_rgb(sprite.color), (x,y), (x1,y1), sprite.thickness)
         else:
-            _pygame_display.blit(sprite._secondary_pygame_surface, (sprite._pygame_x(screen), sprite._pygame_y(screen)))
+            pygame_display.blit(sprite._secondary_pygame_surface, (sprite._pygame_x(screen), sprite._pygame_y(screen)))
 
     pygame.display.flip()
-    _loop.call_soon(_game_loop)
+    loop.call_soon(gameloop)
     return True
 
 
@@ -217,15 +215,15 @@ async def timer(seconds=1.0):
         print('hi')
 
     """
-    await _asyncio.sleep(seconds)
+    await asyncio.sleep(seconds)
     return True
 
 async def animate():
 
-    await _asyncio.sleep(0)
+    await asyncio.sleep(0)
 
 
-_repeat_forever_callbacks = []
+repeat_forever_callbacks = []
 # @decorator
 def repeat_forever(func):
     """
@@ -247,11 +245,11 @@ def repeat_forever(func):
         repeat_wrapper.is_running = False
 
     repeat_wrapper.is_running = False
-    _repeat_forever_callbacks.append(repeat_wrapper)
+    repeat_forever_callbacks.append(repeat_wrapper)
     return func
 
 
-_when_program_starts_callbacks = []
+when_program_starts_callbacks = []
 # @decorator
 def when_program_starts(func):
     """
@@ -266,7 +264,7 @@ def when_program_starts(func):
     async_callback = make_async(func)
     async def wrapper(*args, **kwargs):
         return await async_callback(*args, **kwargs)
-    _when_program_starts_callbacks.append(wrapper)
+    when_program_starts_callbacks.append(wrapper)
     return func
 
 def repeat(number_of_times):
@@ -290,12 +288,12 @@ def start_program():
 
     play.start_program() should almost certainly go at the very end of your program.
     """
-    for func in _when_program_starts_callbacks:
-        _loop.create_task(func())
+    for func in when_program_starts_callbacks:
+        loop.create_task(func())
 
-    _loop.call_soon(_game_loop)
+    loop.call_soon(gameloop)
     try:
-        _loop.run_forever()
+        loop.run_forever()
     finally:
-        _logging.getLogger("asyncio").setLevel(_logging.CRITICAL)
+        logging.getLogger("asyncio").setLevel(logging.CRITICAL)
         pygame.quit()
