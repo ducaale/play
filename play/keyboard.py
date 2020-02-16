@@ -1,4 +1,7 @@
 import pygame
+from .exceptions import Oops, Hmm
+from .utils import make_async
+
 keypress_map = {
     pygame.K_BACKSPACE: 'backspace',
     pygame.K_TAB: 'tab',
@@ -71,23 +74,6 @@ keypress_map = {
     pygame.K_y: 'y',
     pygame.K_z: 'z',
     pygame.K_DELETE: 'delete',
-    # pygame.K_KP0: '',
-    # pygame.K_KP1: '',
-    # pygame.K_KP2: '',
-    # pygame.K_KP3: '',
-    # pygame.K_KP4: '',
-    # pygame.K_KP5: '',
-    # pygame.K_KP6: '',
-    # pygame.K_KP7: '',
-    # pygame.K_KP8: '',
-    # pygame.K_KP9: '',
-    # pygame.K_KP_PERIOD: '',
-    # pygame.K_KP_DIVIDE: '',
-    # pygame.K_KP_MULTIPLY: '',
-    # pygame.K_KP_MINUS: '',
-    # pygame.K_KP_PLUS: '',
-    # pygame.K_KP_ENTER: '',
-    # pygame.K_KP_EQUALS: '',
     pygame.K_UP: 'up',
     pygame.K_DOWN: 'down',
     pygame.K_RIGHT: 'right',
@@ -125,13 +111,6 @@ keypress_map = {
     pygame.K_LMETA: 'meta',
     pygame.K_LSUPER: 'super',
     pygame.K_RSUPER: 'super',
-    # pygame.K_MODE: '',
-    # pygame.K_HELP: '',
-    # pygame.K_PRINT: '',
-    # pygame.K_SYSREQ: '',
-    # pygame.K_BREAK: '',
-    # pygame.K_MENU: '',
-    # pygame.K_POWER: '',
     pygame.K_EURO: '€',
 }
 
@@ -144,3 +123,94 @@ def pygame_key_to_name(pygame_key_event):
     # pygame_key_event.unicode is how we get e.g. # instead of 3 on US keyboards when shift+3 is pressed.
     # It also gives us capital letters and things like that.
 
+
+pressed_keys = {}
+keypress_callbacks = []
+keyrelease_callbacks = []
+
+# @decorator
+def when_any_key_pressed(func):
+    if not callable(func):
+        raise Oops("""@play.when_any_key_pressed doesn't use a list of keys. Try just this instead:
+
+@play.when_any_key_pressed
+async def do(key):
+    print("This key was pressed!", key)
+""")
+    async_callback = make_async(func)
+    async def wrapper(*args, **kwargs):
+        wrapper.is_running = True
+        await async_callback(*args, **kwargs)
+        wrapper.is_running = False
+    wrapper.keys = None
+    wrapper.is_running = False
+    keypress_callbacks.append(wrapper)
+    return wrapper
+
+# @decorator
+def when_key_pressed(*keys):
+    def decorator(func):
+        async_callback = make_async(func)
+        async def wrapper(*args, **kwargs):
+            wrapper.is_running = True
+            await async_callback(*args, **kwargs)
+            wrapper.is_running = False
+        wrapper.keys = keys
+        wrapper.is_running = False
+        keypress_callbacks.append(wrapper)
+        return wrapper
+    return decorator
+
+# @decorator
+def when_any_key_released(func):
+    if not callable(func):
+        raise Oops("""@play.when_any_key_released doesn't use a list of keys. Try just this instead:
+
+@play.when_any_key_released
+async def do(key):
+    print("This key was released!", key)
+""")
+    async_callback = make_async(func)
+    async def wrapper(*args, **kwargs):
+        wrapper.is_running = True
+        await async_callback(*args, **kwargs)
+        wrapper.is_running = False
+    wrapper.keys = None
+    wrapper.is_running = False
+    keyrelease_callbacks.append(wrapper)
+    return wrapper
+
+# @decorator
+def when_key_released(*keys):
+    def decorator(func):
+        async_callback = make_async(func)
+        async def wrapper(*args, **kwargs):
+            wrapper.is_running = True
+            await async_callback(*args, **kwargs)
+            wrapper.is_running = False
+        wrapper.keys = keys
+        wrapper.is_running = False
+        keyrelease_callbacks.append(wrapper)
+        return wrapper
+    return decorator
+
+def key_is_pressed(*keys):
+    """
+    Returns True if any of the given keys are pressed.
+
+    Example:
+
+        @play.repeat_forever
+        async def do():
+            if play.key_is_pressed('up', 'w'):
+                print('up or w pressed')
+    """
+    # Called this function key_is_pressed instead of is_key_pressed so it will
+    # sound more english-like with if-statements:
+    #
+    #   if play.key_is_pressed('w', 'up'): ...
+
+    for key in keys:
+        if key in pressed_keys.values():
+            return True
+    return False
