@@ -26,6 +26,7 @@ from .keyboard import (
     when_key_released,
     when_any_key_released
 )
+from .events import broadcast, broadcast_and_wait, when_event_recieved
 
 from .physics import set_gravity
 from .cfg import screen, all_sprites, backdrop

@@ -9,6 +9,7 @@ from .keyboard import pygame_key_to_name, pressed_keys, keypress_callbacks, keyr
 from .color import color_name_to_rgb
 from .physics import simulate_physics
 from .mouse import mouse
+from .events import process_custom_event_callbacks
 from .utils import point_touching_sprite, make_async, is_line
 
 pygame.init()
@@ -91,6 +92,8 @@ def gameloop():
     if click_release_happened_this_frame and mouse._when_click_released_callbacks:
         for callback in mouse._when_click_released_callbacks:
             loop.create_task(callback())
+    
+    process_custom_event_callbacks(loop)
 
     #############################
     # @repeat_forever callbacks
