@@ -74,6 +74,7 @@ The rest of this document is divided into the following sections:
 - [Sprite Commands](#sprite-commands) - Controlling sprites.
 - [Mouse Commands](#mouse-commands) - Detecting mouse actions (clicks, movement).
 - [Keyboard Commands](#keyboard-commands) - Detecting keyboard actions.
+- [Sound Commands](#Sound-commands) - Playing sounds.
 - [Physics Commands](#physics-commands) - Making physics objects.
 - [Other Useful Commands](#other-useful-commands) - General commands.
 - [Why use Python Play?](#why-use-python-play) - How this library is different from other graphics libraries.
@@ -584,7 +585,16 @@ def do(key):
     text.words = f'{key} key released!''
 ```
 
+## Sound Commands
 
+#### `play.new_sound()`
+```python
+meow = play.new_sound(sound='meow.wav')
+```
+This will load a sound file and makes it ready to be played
+
+### `meow.play()`
+This will play the sound
 
 ## Physics Commands
 
