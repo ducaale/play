@@ -24,22 +24,14 @@ class Mouse(object):
     # @decorator
     def when_clicked(self, func):
         async_callback = make_async(func)
-
-        async def wrapper():
-            await async_callback()
-
-        self._when_clicked_callbacks.append(wrapper)
-        return wrapper
+        self._when_clicked_callbacks.append(async_callback)
+        return async_callback
 
     # @decorator
     def when_click_released(self, func):
         async_callback = make_async(func)
-
-        async def wrapper():
-            await async_callback()
-
-        self._when_click_released_callbacks.append(wrapper)
-        return wrapper
+        self._when_click_released_callbacks.append(async_callback)
+        return async_callback
 
     def distance_to(self, x=None, y=None):
         assert (x is not None)

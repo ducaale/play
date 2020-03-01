@@ -10,7 +10,7 @@ from .color import color_name_to_rgb
 from .physics import simulate_physics
 from .mouse import mouse
 from .events import process_custom_event_callbacks
-from .utils import point_touching_sprite, make_async, is_line
+from .utils import point_touching_sprite, make_async, track_async_status, is_line
 
 pygame.init()
 screen = cfg.screen
@@ -211,12 +211,12 @@ def gameloop():
 async def timer(seconds=1.0):
     """
     Wait a number of seconds. Used with the await keyword like this:
-
+    ```
     @play.repeat_forever
     async def do():
         await play.timer(seconds=2)
         print('hi')
-
+    ```
     """
     await asyncio.sleep(seconds)
     return True
@@ -233,22 +233,16 @@ def repeat_forever(func):
     Calls the given function repeatedly in the game loop.
 
     Example:
+    ```
+    text = play.new_text(words='hi there!', x=0, y=0, font='Arial.ttf', font_size=20, color='black')
 
-        text = play.new_text(words='hi there!', x=0, y=0, font='Arial.ttf', font_size=20, color='black')
-
-        @play.repeat_forever
-        async def do():
-            text.turn(degrees=15)
-
+    @play.repeat_forever
+    async def do():
+        text.turn(degrees=15)
+    ```
     """
-    async_callback = make_async(func)
-    async def repeat_wrapper():
-        repeat_wrapper.is_running = True
-        await async_callback()
-        repeat_wrapper.is_running = False
-
-    repeat_wrapper.is_running = False
-    repeat_forever_callbacks.append(repeat_wrapper)
+    async_callback = track_async_status(make_async(func))
+    repeat_forever_callbacks.append(async_callback)
     return func
 
 
@@ -256,18 +250,15 @@ when_program_starts_callbacks = []
 # @decorator
 def when_program_starts(func):
     """
-    Call code right when the program starts.
-
-    Used like this:
-
+    Call code right when the program starts. Used like this:
+    ```
     @play.when_program_starts
     def do():
         print('the program just started!')
+    ```
     """
     async_callback = make_async(func)
-    async def wrapper(*args, **kwargs):
-        return await async_callback(*args, **kwargs)
-    when_program_starts_callbacks.append(wrapper)
+    when_program_starts_callbacks.append(async_callback)
     return func
 
 def repeat(number_of_times):
@@ -277,19 +268,21 @@ def repeat(number_of_times):
     Equivalent to `range(1, number_of_times+1)`.
 
     Used like this:
-
+    ```
     @play.repeat_forever
     async def do():
         for count in play.repeat(10):
             print(count)
+    ```
     """
     return range(1, number_of_times+1)
 
 def start_program():
     """
     Calling this function starts your program running.
-
-    play.start_program() should almost certainly go at the very end of your program.
+    ```
+    play.start_program() # should almost certainly go at the very end of your program.
+    ```
     """
     for func in when_program_starts_callbacks:
         loop.create_task(func())

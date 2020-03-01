@@ -59,3 +59,11 @@ def make_async(func):
     async def async_func(*args, **kwargs):
         return func(*args, **kwargs)
     return async_func
+
+def track_async_status(async_func):
+    async def wrapper(*args, **kwargs):
+        wrapper.is_running = True
+        await async_func(*args, **kwargs)
+        wrapper.is_running = False
+    wrapper.is_running = False
+    return wrapper

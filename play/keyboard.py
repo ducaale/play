@@ -1,6 +1,6 @@
 import pygame
 from .exceptions import Oops, Hmm
-from .utils import make_async
+from .utils import make_async, track_async_status
 
 keypress_map = {
     pygame.K_BACKSPACE: 'backspace',
@@ -137,28 +137,18 @@ def when_any_key_pressed(func):
 async def do(key):
     print("This key was pressed!", key)
 """)
-    async_callback = make_async(func)
-    async def wrapper(*args, **kwargs):
-        wrapper.is_running = True
-        await async_callback(*args, **kwargs)
-        wrapper.is_running = False
-    wrapper.keys = None
-    wrapper.is_running = False
-    keypress_callbacks.append(wrapper)
-    return wrapper
+    async_callback = track_async_status(make_async(func))
+    async_callback.keys = None
+    keypress_callbacks.append(async_callback)
+    return async_callback
 
 # @decorator
 def when_key_pressed(*keys):
     def decorator(func):
-        async_callback = make_async(func)
-        async def wrapper(*args, **kwargs):
-            wrapper.is_running = True
-            await async_callback(*args, **kwargs)
-            wrapper.is_running = False
-        wrapper.keys = keys
-        wrapper.is_running = False
-        keypress_callbacks.append(wrapper)
-        return wrapper
+        async_callback = track_async_status(make_async(func))
+        async_callback.keys = keys
+        keypress_callbacks.append(async_callback)
+        return async_callback
     return decorator
 
 # @decorator
@@ -170,28 +160,18 @@ def when_any_key_released(func):
 async def do(key):
     print("This key was released!", key)
 """)
-    async_callback = make_async(func)
-    async def wrapper(*args, **kwargs):
-        wrapper.is_running = True
-        await async_callback(*args, **kwargs)
-        wrapper.is_running = False
-    wrapper.keys = None
-    wrapper.is_running = False
-    keyrelease_callbacks.append(wrapper)
-    return wrapper
+    async_callback = track_async_status(make_async(func))
+    async_callback.keys = None
+    keyrelease_callbacks.append(async_callback)
+    return async_callback
 
 # @decorator
 def when_key_released(*keys):
     def decorator(func):
-        async_callback = make_async(func)
-        async def wrapper(*args, **kwargs):
-            wrapper.is_running = True
-            await async_callback(*args, **kwargs)
-            wrapper.is_running = False
-        wrapper.keys = keys
-        wrapper.is_running = False
-        keyrelease_callbacks.append(wrapper)
-        return wrapper
+        async_callback = track_async_status(make_async(func))
+        async_callback.keys = keys
+        keyrelease_callbacks.append(async_callback)
+        return async_callback
     return decorator
 
 def key_is_pressed(*keys):
